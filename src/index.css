@@ -1,0 +1,202 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", "Inter", "sans-serif";
+  
+  /* Primary HSL Variable Mapping */
+  --color-primary-50: hsl(var(--primary-50));
+  --color-primary-100: hsl(var(--primary-100));
+  --color-primary-200: hsl(var(--primary-200));
+  --color-primary-300: hsl(var(--primary-300));
+  --color-primary-400: hsl(var(--primary-400));
+  --color-primary-500: hsl(var(--primary-500));
+  --color-primary-600: hsl(var(--primary-600));
+  --color-primary-700: hsl(var(--primary-700));
+  --color-primary-800: hsl(var(--primary-800));
+  --color-primary-900: hsl(var(--primary-900));
+  --color-primary-950: hsl(var(--primary-950));
+  
+  --shadow-glass-light: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --shadow-glass-dark: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --shadow-glow-primary: 0 0 15px -3px hsl(var(--primary-500) / 0.4);
+  
+  --animate-blob: blob 7s infinite;
+  
+  @keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.95); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+}
+
+@layer base {
+  /* Default Theme Settings */
+  :root {
+    --bg-main: 240 10% 98%;
+    --card-bg: 0 0% 100% / 0.65;
+    --card-border: 240 5.9% 90%;
+    
+    /* Default Indigo Theme */
+    --primary-50: 250 100% 98%;
+    --primary-100: 250 95% 95%;
+    --primary-200: 250 95% 90%;
+    --primary-300: 250 95% 80%;
+    --primary-400: 250 95% 70%;
+    --primary-500: 250 95% 60%;
+    --primary-600: 250 90% 50%;
+    --primary-700: 250 90% 40%;
+    --primary-800: 250 90% 30%;
+    --primary-900: 250 85% 20%;
+    --primary-950: 250 85% 10%;
+    
+    --bg-blob-1: 250 95% 60% / 0.08;
+    --bg-blob-2: 349 90% 60% / 0.08;
+  }
+
+  .dark {
+    --bg-main: 240 10% 3.9%;
+    --card-bg: 240 10% 4% / 0.6;
+    --card-border: 240 3.7% 12%;
+    
+    --bg-blob-1: 250 95% 60% / 0.15;
+    --bg-blob-2: 349 90% 60% / 0.12;
+  }
+
+  /* Theme Presets overrides on the html element */
+  .theme-indigo {
+    --primary-50: 250 100% 98%;
+    --primary-100: 250 95% 95%;
+    --primary-200: 250 95% 90%;
+    --primary-300: 250 95% 80%;
+    --primary-400: 250 95% 70%;
+    --primary-500: 250 95% 60%;
+    --primary-600: 250 90% 50%;
+    --primary-700: 250 90% 40%;
+    --primary-800: 250 90% 30%;
+    --primary-900: 250 85% 20%;
+    --primary-950: 250 85% 10%;
+    --bg-blob-1: 250 95% 60% / 0.12;
+  }
+
+  .theme-emerald {
+    --primary-50: 142 76% 98%;
+    --primary-100: 142 76% 95%;
+    --primary-200: 142 76% 90%;
+    --primary-300: 142 76% 80%;
+    --primary-400: 142 76% 70%;
+    --primary-500: 142 76% 45%;
+    --primary-600: 142 76% 40%;
+    --primary-700: 142 72% 33%;
+    --primary-800: 142 72% 27%;
+    --primary-900: 142 72% 20%;
+    --primary-950: 142 72% 10%;
+    --bg-blob-1: 142 76% 45% / 0.12;
+  }
+
+  .theme-rose {
+    --primary-50: 349 100% 98%;
+    --primary-100: 349 95% 95%;
+    --primary-200: 349 95% 90%;
+    --primary-300: 349 95% 80%;
+    --primary-400: 349 95% 70%;
+    --primary-500: 349 90% 60%;
+    --primary-600: 349 90% 50%;
+    --primary-700: 349 90% 40%;
+    --primary-800: 349 90% 30%;
+    --primary-900: 349 85% 20%;
+    --primary-950: 349 85% 10%;
+    --bg-blob-1: 349 90% 60% / 0.12;
+  }
+
+  .theme-amber {
+    --primary-50: 38 92% 98%;
+    --primary-100: 38 92% 95%;
+    --primary-200: 38 92% 90%;
+    --primary-300: 38 92% 80%;
+    --primary-400: 38 92% 70%;
+    --primary-500: 38 92% 50%;
+    --primary-600: 38 90% 45%;
+    --primary-700: 38 90% 37%;
+    --primary-800: 38 90% 30%;
+    --primary-900: 38 85% 20%;
+    --primary-950: 38 85% 10%;
+    --bg-blob-1: 38 92% 50% / 0.12;
+  }
+
+  .theme-cyan {
+    --primary-50: 187 100% 98%;
+    --primary-100: 187 95% 95%;
+    --primary-200: 187 95% 90%;
+    --primary-300: 187 95% 80%;
+    --primary-400: 187 95% 70%;
+    --primary-500: 187 90% 48%;
+    --primary-600: 187 90% 40%;
+    --primary-700: 187 90% 33%;
+    --primary-800: 187 90% 27%;
+    --primary-900: 187 85% 20%;
+    --primary-950: 187 85% 10%;
+    --bg-blob-1: 187 90% 48% / 0.12;
+  }
+
+  body {
+    background-color: hsl(var(--bg-main));
+    transition: background-color 0.5s ease;
+    overflow-x: hidden;
+  }
+
+  /* Custom Sleek Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(120, 120, 120, 0.15);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(120, 120, 120, 0.3);
+  }
+}
+
+/* Glassmorphism Styles */
+.glass-panel {
+  background-color: hsl(var(--card-bg));
+  border: 1px solid hsl(var(--card-border));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px -4px rgba(0, 0, 0, 0.08);
+  border-color: hsl(var(--primary-500) / 0.25);
+}
+.dark .glass-card-hover:hover {
+  box-shadow: 0 12px 40px -4px rgba(0, 0, 0, 0.4);
+  border-color: hsl(var(--primary-500) / 0.25);
+  background-color: rgba(24, 24, 27, 0.7);
+}
+
+/* Custom Checkbox SVG checkmark draw-in animation */
+.checkbox-svg path {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  transition: stroke-dashoffset 0.3s ease;
+}
+input:checked + label .checkbox-svg path {
+  stroke-dashoffset: 0;
+}
+
+/* Pomodoro progress ring */
+.pomodoro-progress-ring {
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.3s ease;
+}
