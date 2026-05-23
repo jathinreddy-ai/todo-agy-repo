@@ -12,7 +12,9 @@ import {
   ChevronRight, 
   Command,
   Sparkles,
-  Cloud
+  Cloud,
+  User,
+  LogOut
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -27,7 +29,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, onOpenCloud
     activeFilter, 
     setActiveFilter, 
     setIsCustomizerOpen,
-    dbConnectionStatus
+    setIsAuthModalOpen,
+    dbConnectionStatus,
+    currentUser,
+    logOut
   } = useApp();
 
   const getTaskCount = (filter: string) => {
@@ -166,6 +171,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, onOpenCloud
 
         {/* Customizer trigger & Shortcuts Footer */}
         <div className="space-y-1">
+          {/*
           <button
             onClick={onOpenCloud}
             className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-900/40 border border-transparent focus:outline-none`}
@@ -183,6 +189,36 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, onOpenCloud
               }`} />
             )}
           </button>
+          */}
+          
+          {currentUser ? (
+            <div className="flex flex-col gap-1 w-full bg-neutral-100/50 dark:bg-neutral-900/30 p-2 rounded-xl border border-neutral-200/50 dark:border-neutral-800/50">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <div className="relative">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-primary-400 to-primary-600 flex items-center justify-center text-white shrink-0">
+                      <User className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-neutral-900 rounded-full"></span>
+                  </div>
+                  {isOpen && <span className="text-[10px] font-bold text-neutral-700 dark:text-neutral-300 truncate">{currentUser.email}</span>}
+                </div>
+                {isOpen && (
+                  <button onClick={logOut} className="p-1 rounded-md text-neutral-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors" title="Sign Out">
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-semibold text-white bg-primary-500 hover:bg-primary-600 shadow-glow-primary transition-colors focus:outline-none`}
+            >
+              <User className="w-4.5 h-4.5" />
+              {isOpen && <span>Sign In / Sign Up</span>}
+            </button>
+          )}
           <button
             onClick={() => setIsCustomizerOpen(true)}
             className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-semibold text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-900/40 border border-transparent focus:outline-none`}

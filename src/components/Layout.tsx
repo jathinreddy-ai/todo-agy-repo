@@ -7,10 +7,13 @@ import { ThemeCustomizer } from './ThemeCustomizer';
 import { ToastContainer } from './ToastContainer';
 import { TaskModal } from './TaskModal';
 import { CloudConfigModal } from './CloudConfigModal';
+import { AuthModal } from './AuthModal';
+import { useApp } from '../context/AppContext';
 
 export const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [cloudOpen, setCloudOpen] = useState(false);
+  const { isAuthModalOpen, setIsAuthModalOpen } = useApp();
 
   return (
     <div className="min-h-screen flex relative overflow-hidden transition-colors duration-500">
@@ -56,6 +59,7 @@ export const Layout: React.FC = () => {
       {/* Utility Panel drawers & Modal layers */}
       <ThemeCustomizer />
       <TaskModal />
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       <CloudConfigModal isOpen={cloudOpen} onClose={() => setCloudOpen(false)} />
       <ToastContainer />
     </div>

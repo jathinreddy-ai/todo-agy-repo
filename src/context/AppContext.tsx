@@ -17,6 +17,7 @@ interface AppContextProps {
   selectedTask: Task | null;
   isTaskModalOpen: boolean;
   isCustomizerOpen: boolean;
+  isAuthModalOpen: boolean;
   
   // Database & Auth States
   dbConfig: DbConfig;
@@ -29,6 +30,7 @@ interface AppContextProps {
   updateDbConfig: (config: DbConfig) => void;
   signUp: (email: string, password: string) => Promise<void>;
   logIn: (email: string, password: string) => Promise<void>;
+  logInWithGoogle: () => Promise<void>;
   logOut: () => Promise<void>;
   migrateLocalTasks: () => Promise<void>;
 
@@ -53,6 +55,7 @@ interface AppContextProps {
   setSelectedTask: (task: Task | null) => void;
   setIsTaskModalOpen: (isOpen: boolean) => void;
   setIsCustomizerOpen: (isOpen: boolean) => void;
+  setIsAuthModalOpen: (isOpen: boolean) => void;
   
   // Toasts Actions
   addToast: (message: string, type: ToastMessage['type'], duration?: number) => void;
@@ -95,6 +98,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Sync themes to local storage and modify root class list
   useEffect(() => {
@@ -196,44 +200,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Fetch tasks when database service or user changes
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchTasks = async () => {
-      setIsLoadingTasks(true);
-      try {
-        if (dbService.name === 'local') {
-          const localTasks = await dbService.getTasks();
-          if (isMounted) {
-            setTasks(localTasks.length > 0 ? localTasks : DUMMY_TASKS);
-          }
-        } else {
-          if (currentUser) {
-            const cloudTasks = await dbService.getTasks(currentUser.uid);
-            if (isMounted) {
-              setTasks(cloudTasks);
-            }
-          } else {
-            // Load local storage tasks as fallback if not logged in to cloud
-            const localTasks = await createDbService({ type: 'local' }).getTasks();
-            if (isMounted) {
-              setTasks(localTasks.length > 0 ? localTasks : DUMMY_TASKS);
-            }
-          }
-        }
-      } catch (e) {
-        console.error('Error fetching tasks:', e);
-        addToast('Error fetching tasks from database', 'error');
-      } finally {
-        if (isMounted) {
-          setIsLoadingTasks(false);
-        }
-      }
-    };
+    let unsubscribe: (() => void) | undefined;
+    setIsLoadingTasks(true);
 
-    fetchTasks();
+    if (dbService.name === 'local') {
+      unsubscribe = dbService.subscribeToTasks(undefined, (localTasks) => {
+        setTasks(localTasks.length > 0 ? localTasks : DUMMY_TASKS);
+        setIsLoadingTasks(false);
+      });
+    } else {
+      if (currentUser) {
+        unsubscribe = dbService.subscribeToTasks(currentUser.uid, (cloudTasks) => {
+          setTasks(cloudTasks);
+          setIsLoadingTasks(false);
+        });
+      } else {
+        // Load local storage tasks as fallback if not logged in to cloud
+        const localService = createDbService({ type: 'local' });
+        unsubscribe = localService.subscribeToTasks(undefined, (localTasks) => {
+          setTasks(localTasks.length > 0 ? localTasks : DUMMY_TASKS);
+          setIsLoadingTasks(false);
+        });
+      }
+    }
 
     return () => {
-      isMounted = false;
+      if (unsubscribe) unsubscribe();
     };
   }, [dbService, currentUser]);
 
@@ -303,6 +295,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error(err);
       addToast(err.message || 'Login failure', 'error');
       throw err;
+    } finally {
+      setIsLoadingUser(false);
+    }
+  };
+
+  const logInWithGoogle = async () => {
+    setIsLoadingUser(true);
+    try {
+      if (dbService.name === 'supabase') {
+        const client = (dbService as any).getClient() as SupabaseClient;
+        const { error } = await client.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin,
+          },
+        });
+        if (error) throw error;
+      } else if (dbService.name === 'firebase') {
+        const auth = getAuth();
+        const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        addToast('Logged in with Google!', 'success');
+      } else {
+        throw new Error('Please link a cloud database in Settings to use Google Sign-In.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      addToast(err.message || 'Google Login failure', 'error');
     } finally {
       setIsLoadingUser(false);
     }
@@ -596,6 +617,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       selectedTask,
       isTaskModalOpen,
       isCustomizerOpen,
+      isAuthModalOpen,
       
       dbConfig,
       dbConnectionStatus,
@@ -606,6 +628,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateDbConfig,
       signUp,
       logIn,
+      logInWithGoogle,
       logOut,
       migrateLocalTasks,
       
@@ -625,6 +648,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setSelectedTask,
       setIsTaskModalOpen,
       setIsCustomizerOpen,
+      setIsAuthModalOpen,
       addToast,
       removeToast
     }}>

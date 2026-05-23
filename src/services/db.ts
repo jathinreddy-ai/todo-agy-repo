@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, collection, doc, getDocs, setDoc, updateDoc, deleteDoc, writeBatch, query, where, Firestore } from 'firebase/firestore';
+import { getFirestore, collection, doc, getDocs, setDoc, updateDoc, deleteDoc, writeBatch, query, where, Firestore, onSnapshot } from 'firebase/firestore';
 import type { Task } from '../types';
 
 export interface IDbService {
@@ -10,6 +10,7 @@ export interface IDbService {
   updateTask(id: string, updates: Partial<Task>): Promise<Task>;
   deleteTask(id: string): Promise<void>;
   bulkAddTasks(tasks: Task[], userId?: string): Promise<void>;
+  subscribeToTasks(userId: string | undefined, callback: (tasks: Task[]) => void): () => void;
 }
 
 // -------------------------------------------------------------
@@ -85,6 +86,7 @@ class LocalStorageService implements IDbService {
     };
     const tasks = await this.getTasks();
     localStorage.setItem('todo_app_tasks', JSON.stringify([fullTask, ...tasks]));
+    window.dispatchEvent(new Event('local_tasks_updated'));
     return fullTask;
   }
 
@@ -99,6 +101,7 @@ class LocalStorageService implements IDbService {
       return t;
     });
     localStorage.setItem('todo_app_tasks', JSON.stringify(nextTasks));
+    window.dispatchEvent(new Event('local_tasks_updated'));
     if (!updated) throw new Error('Task not found');
     return updated;
   }
@@ -106,12 +109,35 @@ class LocalStorageService implements IDbService {
   async deleteTask(id: string): Promise<void> {
     const tasks = await this.getTasks();
     localStorage.setItem('todo_app_tasks', JSON.stringify(tasks.filter(t => t.id !== id)));
+    window.dispatchEvent(new Event('local_tasks_updated'));
   }
 
   async bulkAddTasks(tasksToAdd: Task[]): Promise<void> {
     const tasks = await this.getTasks();
     const merged = [...tasksToAdd, ...tasks.filter(t => !tasksToAdd.some(ta => ta.id === t.id))];
     localStorage.setItem('todo_app_tasks', JSON.stringify(merged));
+    window.dispatchEvent(new Event('local_tasks_updated'));
+  }
+
+  subscribeToTasks(userId: string | undefined, callback: (tasks: Task[]) => void): () => void {
+    const update = () => {
+      this.getTasks().then(callback);
+    };
+    
+    update();
+
+    const storageListener = (e: StorageEvent) => {
+      if (e.key === 'todo_app_tasks') update();
+    };
+    const customListener = () => update();
+    
+    window.addEventListener('storage', storageListener);
+    window.addEventListener('local_tasks_updated', customListener);
+    
+    return () => {
+      window.removeEventListener('storage', storageListener);
+      window.removeEventListener('local_tasks_updated', customListener);
+    };
   }
 }
 
@@ -186,6 +212,31 @@ class SupabaseService implements IDbService {
     const { error } = await this.client.from('tasks').insert(dbTasks);
     if (error) throw error;
   }
+
+  subscribeToTasks(userId: string | undefined, callback: (tasks: Task[]) => void): () => void {
+    if (!userId) {
+      callback([]);
+      return () => {};
+    }
+
+    // Initial fetch
+    this.getTasks(userId).then(callback);
+
+    const channel = this.client
+      .channel(`public:tasks:${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks', filter: `user_id=eq.${userId}` },
+        () => {
+          this.getTasks(userId).then(callback);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      this.client.removeChannel(channel);
+    };
+  }
 }
 
 // -------------------------------------------------------------
@@ -250,6 +301,24 @@ class FirebaseService implements IDbService {
       batch.set(docRef, { ...task, userId });
     });
     await batch.commit();
+  }
+
+  subscribeToTasks(userId: string | undefined, callback: (tasks: Task[]) => void): () => void {
+    if (!userId) {
+      callback([]);
+      return () => {};
+    }
+
+    const q = query(collection(this.db, 'tasks'), where('userId', '==', userId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const tasks: Task[] = [];
+      snapshot.forEach(doc => {
+        tasks.push(doc.data() as Task);
+      });
+      callback(tasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    });
+
+    return unsubscribe;
   }
 }
 
