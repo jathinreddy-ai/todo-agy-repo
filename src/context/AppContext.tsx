@@ -420,6 +420,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Task Actions
   const addTask = async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (dbConfig.type !== 'local' && !currentUser) {
+      addToast('Please sign in to save tasks to the cloud.', 'warning');
+      setIsAuthModalOpen(true);
+      return;
+    }
+    
     try {
       const newTask = await dbService.addTask(taskData, currentUser?.uid);
       setTasks(prev => [newTask, ...prev]);
@@ -431,6 +437,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const editTask = async (id: string, updatedTaskData: Partial<Task>) => {
+    if (dbConfig.type !== 'local' && !currentUser) {
+      addToast('Please sign in to modify tasks.', 'warning');
+      return;
+    }
+
     try {
       const updated = await dbService.updateTask(id, updatedTaskData);
       setTasks(prev => prev.map(task => {
@@ -451,6 +462,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteTask = async (id: string) => {
+    if (dbConfig.type !== 'local' && !currentUser) {
+      addToast('Please sign in to delete tasks.', 'warning');
+      return;
+    }
+
     try {
       await dbService.deleteTask(id);
       setTasks(prev => prev.filter(task => task.id !== id));
@@ -462,6 +478,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleTaskCompleted = async (id: string) => {
+    if (dbConfig.type !== 'local' && !currentUser) {
+      addToast('Please sign in to save progress.', 'warning');
+      return;
+    }
+
     const task = tasks.find(t => t.id === id);
     if (!task) return;
     const nextCompleted = !task.completed;
@@ -505,6 +526,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Subtask Actions
   const toggleSubTaskCompleted = async (taskId: string, subtaskId: string) => {
+    if (dbConfig.type !== 'local' && !currentUser) {
+      addToast('Please sign in to save progress.', 'warning');
+      return;
+    }
+
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
     
@@ -547,6 +573,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addSubTask = async (taskId: string, title: string) => {
+    if (dbConfig.type !== 'local' && !currentUser) {
+      addToast('Please sign in to add subtasks.', 'warning');
+      return;
+    }
+
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
@@ -580,6 +611,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteSubTask = async (taskId: string, subtaskId: string) => {
+    if (dbConfig.type !== 'local' && !currentUser) {
+      addToast('Please sign in to modify subtasks.', 'warning');
+      return;
+    }
+
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 

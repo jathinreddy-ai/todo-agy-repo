@@ -11,6 +11,7 @@ export const PomodoroTimer: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [totalSessions, setTotalSessions] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   // Customizable durations in minutes
@@ -151,28 +152,37 @@ export const PomodoroTimer: React.FC = () => {
   const strokeDashoffset = circumference * (1 - progress);
 
   return (
-    <div className="w-full rounded-2xl glass-panel border border-neutral-200 dark:border-neutral-800 p-5 shadow-sm hover:shadow-glow-primary transition-all duration-300">
+    <div className={`w-full rounded-2xl glass-panel border border-neutral-200 dark:border-neutral-800 shadow-sm hover:shadow-glow-primary transition-all duration-300 ${isExpanded ? 'p-5' : 'p-3'}`}>
       {/* Title block */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-1.5 text-neutral-800 dark:text-neutral-200 font-semibold text-sm">
+      <div 
+        className={`flex items-center justify-between cursor-pointer group ${isExpanded ? 'mb-4' : ''}`}
+        onClick={() => setIsExpanded(!isExpanded)}
+        title={isExpanded ? "Collapse timer" : "Expand timer"}
+      >
+        <div className="flex items-center gap-1.5 text-neutral-800 dark:text-neutral-200 font-semibold text-sm group-hover:text-primary-500 transition-colors">
           <Flame className="w-4 h-4 text-primary-500 fill-primary-500/20" />
           Focus Pomodoro
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
+          <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full uppercase tracking-wider" title="Total completed sessions">
             SESS: {totalSessions}
           </span>
-          <button
-            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-            className="p-1 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none"
-            aria-label="Timer settings"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
+          {isExpanded && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(!isSettingsOpen); }}
+              className="p-1 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none"
+              title="Timer settings"
+              aria-label="Timer settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      {isSettingsOpen ? (
+      {isExpanded && (
+        <>
+          {isSettingsOpen ? (
         /* Settings View */
         <div className="space-y-3 py-1 animate-fadeIn">
           <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-2">Adjust durations (mins)</div>
@@ -270,12 +280,14 @@ export const PomodoroTimer: React.FC = () => {
             <button
               onClick={resetTimer}
               className="p-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none"
+              title="Reset timer"
               aria-label="Reset timer"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
             <button
               onClick={toggleTimer}
+              title={isRunning ? "Pause timer" : "Start timer"}
               className={`px-6 py-2.5 rounded-xl font-semibold text-xs transition-all duration-200 focus:outline-none flex items-center gap-1.5 shadow-sm border ${
                 isRunning
                   ? 'bg-transparent border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
@@ -297,12 +309,15 @@ export const PomodoroTimer: React.FC = () => {
             <button
               onClick={skipTimer}
               className="p-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none"
+              title="Skip to next phase"
               aria-label="Skip phase"
             >
               <SkipForward className="w-4 h-4" />
             </button>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

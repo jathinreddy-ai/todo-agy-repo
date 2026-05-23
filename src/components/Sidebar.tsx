@@ -61,13 +61,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, onOpenCloud
 
   return (
     <aside
-      className={`fixed top-0 left-0 h-full z-40 glass-panel border-r border-neutral-200/60 dark:border-neutral-800/80 shadow-sm flex flex-col justify-between transition-all duration-300 ${
+      className={`fixed top-0 left-0 h-full z-40 glass-panel border-r border-neutral-200/60 dark:border-neutral-800/80 shadow-sm flex flex-col transition-all duration-300 ${
         isOpen ? 'w-64 translate-x-0' : 'w-20 -translate-x-full md:translate-x-0'
       }`}
     >
       {/* Brand & Collapse Header */}
-      <div>
-        <div className="flex items-center justify-between p-5 border-b border-neutral-200/50 dark:border-neutral-800/50 h-16">
+      <div className="flex items-center justify-between p-5 border-b border-neutral-200/50 dark:border-neutral-800/50 h-16 shrink-0">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white shadow-glow-primary shrink-0">
               <Sparkles className="w-4 h-4 text-white fill-white/10" />
@@ -81,12 +80,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, onOpenCloud
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="hidden md:flex p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none"
+            title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
             aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
           >
             {isOpen ? <ChevronLeft className="w-4.5 h-4.5" /> : <ChevronRight className="w-4.5 h-4.5" />}
           </button>
-        </div>
+      </div>
 
+      {/* Scrollable Main Content */}
+      <div className="flex-1 overflow-y-auto flex flex-col justify-between">
         {/* Primary Navigation Sections */}
         <div className="p-4 space-y-6">
           {/* Nav List */}
@@ -98,6 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, onOpenCloud
                 <button
                   key={item.id}
                   onClick={() => setActiveFilter(item.id)}
+                  title={item.label}
                   className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all focus:outline-none ${
                     active
                       ? 'bg-primary-500 text-white shadow-glow-primary border border-primary-600'
@@ -139,6 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, onOpenCloud
                     <button
                       key={tag}
                       onClick={() => setActiveFilter(tag)}
+                      title={tag}
                       className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-medium transition-all focus:outline-none ${
                         active
                           ? 'bg-primary-500/10 dark:bg-primary-500/5 text-primary-500 font-bold border-l-2 border-primary-500 pl-1.5'
@@ -159,10 +163,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, onOpenCloud
             </div>
           )}
         </div>
-      </div>
 
       {/* Embedded Pomodoro & Footer */}
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 shrink-0">
         {isOpen && (
           <div className="animate-fadeIn">
             <PomodoroTimer />
@@ -213,6 +216,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, onOpenCloud
           ) : (
             <button
               onClick={() => setIsAuthModalOpen(true)}
+              title="Sign In / Account"
               className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-semibold text-white bg-primary-500 hover:bg-primary-600 shadow-glow-primary transition-colors focus:outline-none`}
             >
               <User className="w-4.5 h-4.5" />
@@ -221,6 +225,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, onOpenCloud
           )}
           <button
             onClick={() => setIsCustomizerOpen(true)}
+            title="Aesthetics Lab"
             className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-semibold text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-900/40 border border-transparent focus:outline-none`}
           >
             <Sliders className="w-4.5 h-4.5" />
@@ -233,6 +238,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, onOpenCloud
             </div>
           )}
         </div>
+      </div>
       </div>
     </aside>
   );
