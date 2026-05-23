@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import type { Priority, SubTask } from '../types';
+import type { Priority, SubTask, ReminderConfig } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Flame, Plus, Trash2, Calendar, Tags, CheckSquare } from 'lucide-react';
+import { X, Flame, Plus, Trash2, Calendar, Tags, CheckSquare, Clock, Bell } from 'lucide-react';
 import { PRESET_TAGS } from '../utils/dummyData';
 
 export const TaskModal: React.FC = () => {
@@ -23,6 +23,8 @@ export const TaskModal: React.FC = () => {
   const [subtasks, setSubtasks] = useState<SubTask[]>([]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [estimatedPomodoros, setEstimatedPomodoros] = useState(1);
+  const [dueTime, setDueTime] = useState('');
+  const [reminderConfig, setReminderConfig] = useState<ReminderConfig>({ type: 'none' });
 
   // Sync state if editing an existing task
   useEffect(() => {
@@ -31,20 +33,24 @@ export const TaskModal: React.FC = () => {
       setDescription(selectedTask.description || '');
       setPriority(selectedTask.priority);
       setDueDate(selectedTask.dueDate || '');
+      setDueTime(selectedTask.dueTime || '');
       setTags(selectedTask.tags);
       setSubtasks(selectedTask.subtasks);
       setEstimatedPomodoros(selectedTask.estimatedPomodoros);
+      setReminderConfig(selectedTask.reminderConfig || { type: 'none' });
     } else {
       // Clear forms for new tasks
       setTitle('');
       setDescription('');
       setPriority('medium');
       setDueDate('');
+      setDueTime('');
       setTags([]);
       setCustomTag('');
       setSubtasks([]);
       setNewSubtaskTitle('');
       setEstimatedPomodoros(1);
+      setReminderConfig({ type: 'none' });
     }
   }, [selectedTask, isTaskModalOpen]);
 
@@ -95,10 +101,12 @@ export const TaskModal: React.FC = () => {
       completed: selectedTask ? selectedTask.completed : false,
       priority,
       dueDate: dueDate || undefined,
+      dueTime: dueTime || undefined,
       tags,
       subtasks,
       estimatedPomodoros,
-      completedPomodoros: selectedTask ? selectedTask.completedPomodoros : 0
+      completedPomodoros: selectedTask ? selectedTask.completedPomodoros : 0,
+      reminderConfig
     };
 
     if (selectedTask) {
@@ -172,37 +180,37 @@ export const TaskModal: React.FC = () => {
                 />
               </div>
 
-              {/* Priority & Due Date row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Priority Selector */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block">Priority Load</label>
-                  <div className="flex bg-neutral-100 dark:bg-neutral-900/60 p-1 rounded-xl border border-neutral-200/50 dark:border-neutral-800/40">
-                    {(['low', 'medium', 'high'] as Priority[]).map((p) => {
-                      const active = priority === p;
-                      const activeColor = 
-                        p === 'high' ? 'text-rose-500 bg-rose-500/10 dark:bg-rose-500/5 border-rose-500/20' : 
-                        p === 'medium' ? 'text-amber-500 bg-amber-500/10 dark:bg-amber-500/5 border-amber-500/20' : 
-                        'text-primary-500 bg-primary-500/10 dark:bg-primary-500/5 border-primary-500/20';
-                      
-                      return (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => setPriority(p)}
-                          className={`flex-1 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none ${
-                            active
-                              ? `${activeColor} border shadow-sm`
-                              : 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'
-                          }`}
-                        >
-                          {p}
-                        </button>
-                      );
-                    })}
-                  </div>
+              {/* Priority Load */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block">Priority Load</label>
+                <div className="flex bg-neutral-100 dark:bg-neutral-900/60 p-1 rounded-xl border border-neutral-200/50 dark:border-neutral-800/40">
+                  {(['low', 'medium', 'high'] as Priority[]).map((p) => {
+                    const active = priority === p;
+                    const activeColor = 
+                      p === 'high' ? 'text-rose-500 bg-rose-500/10 dark:bg-rose-500/5 border-rose-500/20' : 
+                      p === 'medium' ? 'text-amber-500 bg-amber-500/10 dark:bg-amber-500/5 border-amber-500/20' : 
+                      'text-primary-500 bg-primary-500/10 dark:bg-primary-500/5 border-primary-500/20';
+                    
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPriority(p)}
+                        className={`flex-1 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none ${
+                          active
+                            ? `${activeColor} border shadow-sm`
+                            : 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
 
+              {/* Dates & Reminders */}
+              <div className="grid grid-cols-2 gap-4">
                 {/* Due Date picker */}
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-1">
@@ -215,6 +223,71 @@ export const TaskModal: React.FC = () => {
                     className="w-full px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500 transition-colors"
                   />
                 </div>
+
+                {/* Due Time picker */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> Time
+                  </label>
+                  <input
+                    type="time"
+                    value={dueTime}
+                    onChange={(e) => setDueTime(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500 transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Reminder Config */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-1">
+                  <Bell className="w-3.5 h-3.5" /> Notification Reminder
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={reminderConfig.type}
+                    onChange={(e) => setReminderConfig({ ...reminderConfig, type: e.target.value as any })}
+                    className="flex-1 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500 transition-colors"
+                  >
+                    <option value="none">No reminder</option>
+                    <option value="exact">At time of event</option>
+                    <option value="10m_before">10 minutes before</option>
+                    <option value="1h_before">1 hour before</option>
+                    <option value="1d_before">1 day before</option>
+                    <option value="custom">Custom time...</option>
+                  </select>
+                  
+                  {reminderConfig.type === 'custom' && (
+                    <input
+                      type="datetime-local"
+                      value={reminderConfig.customTime || ''}
+                      onChange={(e) => setReminderConfig({ ...reminderConfig, customTime: e.target.value })}
+                      className="flex-1 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500 transition-colors"
+                    />
+                  )}
+                </div>
+                {reminderConfig.type !== 'none' && (
+                  <div className="flex items-center gap-4 mt-2 px-1">
+                    <label className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={reminderConfig.push !== false} // Default true
+                        onChange={(e) => setReminderConfig({ ...reminderConfig, push: e.target.checked })}
+                        className="rounded border-neutral-300 dark:border-neutral-700 text-primary-500 focus:ring-primary-500 bg-white/50 dark:bg-neutral-900/50"
+                      />
+                      Desktop Push
+                    </label>
+                    <label className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={reminderConfig.email === true} 
+                        onChange={(e) => setReminderConfig({ ...reminderConfig, email: e.target.checked })}
+                        className="rounded border-neutral-300 dark:border-neutral-700 text-primary-500 focus:ring-primary-500 bg-white/50 dark:bg-neutral-900/50"
+                      />
+                      Email Notification
+                    </label>
+                  </div>
+                )}
               </div>
 
               {/* Tags panel */}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppProvider } from './context/AppContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { Layout } from './components/Layout';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
@@ -13,7 +14,9 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <AppProvider>
-      <AppContent />
+      <NotificationProvider>
+        <AppContent />
+      </NotificationProvider>
     </AppProvider>
   );
 }

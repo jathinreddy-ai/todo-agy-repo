@@ -4,6 +4,13 @@ export interface SubTask {
   completed: boolean;
 }
 
+export interface ReminderConfig {
+  type: 'none' | 'exact' | '10m_before' | '1h_before' | '1d_before' | 'custom';
+  customTime?: string; // ISO string
+  email?: boolean;
+  push?: boolean;
+}
+
 export type Priority = 'low' | 'medium' | 'high';
 
 export interface Task {
@@ -13,11 +20,12 @@ export interface Task {
   completed: boolean;
   priority: Priority;
   dueDate?: string; // YYYY-MM-DD
+  dueTime?: string; // HH:mm
   tags: string[];
   subtasks: SubTask[];
   estimatedPomodoros: number;
   completedPomodoros: number;
-  reminder?: boolean;
+  reminderConfig?: ReminderConfig;
   createdAt: string;
   updatedAt: string;
 }

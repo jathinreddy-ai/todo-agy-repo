@@ -24,11 +24,12 @@ function mapTaskFromDb(dbTask: any): Task {
     completed: dbTask.completed,
     priority: dbTask.priority,
     dueDate: dbTask.due_date || undefined,
+    dueTime: dbTask.due_time || undefined,
     tags: dbTask.tags || [],
     subtasks: typeof dbTask.subtasks === 'string' ? JSON.parse(dbTask.subtasks) : (dbTask.subtasks || []),
     estimatedPomodoros: dbTask.estimated_pomodoros || 1,
     completedPomodoros: dbTask.completed_pomodoros || 0,
-    reminder: dbTask.reminder || false,
+    reminderConfig: typeof dbTask.reminder_config === 'string' ? JSON.parse(dbTask.reminder_config) : (dbTask.reminder_config || undefined),
     createdAt: dbTask.created_at,
     updatedAt: dbTask.updated_at,
   };
@@ -43,6 +44,7 @@ function mapTaskToDb(task: Partial<Task>, userId?: string) {
   if (task.completed !== undefined) dbTask.completed = task.completed;
   if (task.priority !== undefined) dbTask.priority = task.priority;
   if (task.dueDate !== undefined) dbTask.due_date = task.dueDate;
+  if (task.dueTime !== undefined) dbTask.due_time = task.dueTime;
   if (task.tags !== undefined) dbTask.tags = task.tags;
   
   // subtasks can be sent directly as JSON array to supabase-js client
@@ -50,7 +52,7 @@ function mapTaskToDb(task: Partial<Task>, userId?: string) {
   
   if (task.estimatedPomodoros !== undefined) dbTask.estimated_pomodoros = task.estimatedPomodoros;
   if (task.completedPomodoros !== undefined) dbTask.completed_pomodoros = task.completedPomodoros;
-  if (task.reminder !== undefined) dbTask.reminder = task.reminder;
+  if (task.reminderConfig !== undefined) dbTask.reminder_config = task.reminderConfig;
   if (task.createdAt !== undefined) dbTask.created_at = task.createdAt;
   if (task.updatedAt !== undefined) dbTask.updated_at = task.updatedAt;
   return dbTask;

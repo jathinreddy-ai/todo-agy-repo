@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useNotifications } from '../context/NotificationContext';
 import { PomodoroTimer } from './PomodoroTimer';
 import { PRESET_TAGS, TAG_COLORS } from '../utils/dummyData';
 import { 
@@ -14,7 +15,9 @@ import {
   Sparkles,
   Cloud,
   User,
-  LogOut
+  LogOut,
+  Bell,
+  Check
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -34,6 +37,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, onOpenCloud
     currentUser,
     logOut
   } = useApp();
+
+  const { notifications, unreadCount, markAllAsRead, requestPermission } = useNotifications();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const getTaskCount = (filter: string) => {
     const todayStr = new Date().toISOString().split('T')[0];
@@ -77,14 +83,64 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, onOpenCloud
               </span>
             )}
           </div>
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="hidden md:flex p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none"
-            title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-            aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-          >
-            {isOpen ? <ChevronLeft className="w-4.5 h-4.5" /> : <ChevronRight className="w-4.5 h-4.5" />}
-          </button>
+          
+          <div className="flex items-center gap-1">
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  if (!showNotifications && unreadCount > 0) markAllAsRead();
+                  requestPermission(); // Request browser push permission if not granted
+                }}
+                className="p-1.5 rounded-lg text-neutral-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors focus:outline-none"
+                title="Notifications"
+              >
+                <Bell className="w-4.5 h-4.5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full animate-pulse border-2 border-white dark:border-neutral-900"></span>
+                )}
+              </button>
+
+              {/* Notifications Dropdown */}
+              {showNotifications && (
+                <div className="absolute top-full mt-2 left-0 w-64 max-h-80 overflow-y-auto glass-panel border border-neutral-200 dark:border-neutral-800 shadow-xl rounded-xl z-50 flex flex-col custom-scrollbar">
+                  <div className="p-3 border-b border-neutral-100 dark:border-neutral-800/60 sticky top-0 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md flex justify-between items-center">
+                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Alerts</span>
+                    {notifications.length > 0 && (
+                      <button onClick={markAllAsRead} className="text-[10px] text-primary-500 hover:underline">Mark all read</button>
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-neutral-400 dark:text-neutral-500">No new notifications</div>
+                    ) : (
+                      notifications.map(n => (
+                        <div key={n.id} className={`p-3 border-b border-neutral-100 dark:border-neutral-800/60 last:border-0 ${n.read ? 'opacity-60' : 'bg-primary-500/5'}`}>
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">{n.title}</span>
+                            {!n.read && <div className="w-1.5 h-1.5 rounded-full bg-primary-500 shrink-0 mt-1" />}
+                          </div>
+                          <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">{n.message}</p>
+                          <span className="text-[8px] text-neutral-400 dark:text-neutral-500 block mt-2 font-mono">
+                            {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="hidden md:flex p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none"
+              title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+              aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+            >
+              {isOpen ? <ChevronLeft className="w-4.5 h-4.5" /> : <ChevronRight className="w-4.5 h-4.5" />}
+            </button>
+          </div>
       </div>
 
       {/* Scrollable Main Content */}
