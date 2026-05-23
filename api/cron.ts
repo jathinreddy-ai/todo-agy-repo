@@ -38,42 +38,26 @@ export default async function handler(req: any, res: any) {
         : task.reminder_config;
 
       // Skip if email is disabled, already sent, or no reminder type
-      if (!config.email || config.emailSent || config.type === 'none') continue;
+      if (!config.email || config.emailSent || config.type === 'none' || !config.targetTimeUtc) continue;
 
-      let targetDate: Date | null = null;
-      if (config.type === 'exact' && task.due_date && task.due_time) {
-        targetDate = new Date(`${task.due_date}T${task.due_time}`);
-      } else if (config.type === 'custom' && config.customTime) {
-        targetDate = new Date(config.customTime);
-      } else if (task.due_date && task.due_time) {
-        const exactTime = new Date(`${task.due_date}T${task.due_time}`);
-        if (config.type === '10m_before') {
-          targetDate = new Date(exactTime.getTime() - 10 * 60000);
-        } else if (config.type === '1h_before') {
-          targetDate = new Date(exactTime.getTime() - 60 * 60000);
-        } else if (config.type === '1d_before') {
-          targetDate = new Date(exactTime.getTime() - 24 * 60 * 60000);
-        }
-      }
-
-      if (targetDate) {
-        const diffMs = targetDate.getTime() - now.getTime();
+      const targetDate = new Date(config.targetTimeUtc);
+      const diffMs = targetDate.getTime() - now.getTime();
+      
+      // Trigger if the target time is within the last 5 minutes
+      // We check if it's past the target date, but not too far past it (to prevent sending old emails)
+      if (diffMs <= 0 && diffMs >= -300000) {
         
-        // Trigger if the target time is within the last 5 minutes
-        // We check if it's past the target date, but not too far past it (to prevent sending old emails)
-        if (diffMs <= 0 && diffMs >= -300000) {
-          
-          // Fetch the exact user email using Admin API
-          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(task.user_id);
-          if (userError || !userData?.user?.email) continue;
-          
-          const userEmail = userData.user.email;
+        // Fetch the exact user email using Admin API
+        const { data: userData, error: userError } = await supabase.auth.admin.getUserById(task.user_id);
+        if (userError || !userData?.user?.email) continue;
+        
+        const userEmail = userData.user.email;
 
-          // Send Email via Resend
-          await resend.emails.send({
-            from: 'Aether Todo <onboarding@resend.dev>',
-            to: userEmail,
-            subject: `Reminder: ${task.title}`,
+        // Send Email via Resend
+        const { data, error: resendError } = await resend.emails.send({
+          from: 'Aether Todo <onboarding@resend.dev>',
+          to: userEmail,
+          subject: `Reminder: ${task.title}`,
             html: `
               <div style="font-family: sans-serif; padding: 20px; background-color: #f9fafb; border-radius: 10px;">
                 <h2 style="color: #6366f1; margin-bottom: 5px;">Aether Tasks</h2>
@@ -88,17 +72,21 @@ export default async function handler(req: any, res: any) {
                 <p style="font-size: 12px; color: #9ca3af;">Sent by Aether Automation</p>
               </div>
             `
-          });
+        });
 
-          // Mark as sent
-          const updatedConfig = { ...config, emailSent: true };
-          await supabase
-            .from('tasks')
-            .update({ reminder_config: updatedConfig })
-            .eq('id', task.id);
-            
-          sentEmails.push(task.id);
+        if (resendError) {
+          console.error(`Failed to send email for task ${task.id}:`, resendError);
+          continue; // Don't mark as sent if it failed!
         }
+
+        // Mark as sent
+        const updatedConfig = { ...config, emailSent: true };
+        await supabase
+          .from('tasks')
+          .update({ reminder_config: updatedConfig })
+          .eq('id', task.id);
+          
+        sentEmails.push(task.id);
       }
     }
 

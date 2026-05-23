@@ -95,6 +95,21 @@ export const TaskModal: React.FC = () => {
     e.preventDefault();
     if (!title.trim()) return;
 
+    // Calculate target UTC timestamp for the reminder
+    let targetTimeUtc: string | undefined;
+    if (reminderConfig.type !== 'none') {
+      if (reminderConfig.type === 'custom' && reminderConfig.customTime) {
+        targetTimeUtc = new Date(reminderConfig.customTime).toISOString();
+      } else if (dueDate && dueTime) {
+        // Parse as local time in the user's browser
+        const exactTime = new Date(`${dueDate}T${dueTime}`);
+        if (reminderConfig.type === 'exact') targetTimeUtc = exactTime.toISOString();
+        else if (reminderConfig.type === '10m_before') targetTimeUtc = new Date(exactTime.getTime() - 10*60000).toISOString();
+        else if (reminderConfig.type === '1h_before') targetTimeUtc = new Date(exactTime.getTime() - 60*60000).toISOString();
+        else if (reminderConfig.type === '1d_before') targetTimeUtc = new Date(exactTime.getTime() - 24*60*60000).toISOString();
+      }
+    }
+
     const taskPayload = {
       title: title.trim(),
       description: description.trim() || undefined,
@@ -106,7 +121,10 @@ export const TaskModal: React.FC = () => {
       subtasks,
       estimatedPomodoros,
       completedPomodoros: selectedTask ? selectedTask.completedPomodoros : 0,
-      reminderConfig
+      reminderConfig: {
+        ...reminderConfig,
+        targetTimeUtc
+      }
     };
 
     if (selectedTask) {
