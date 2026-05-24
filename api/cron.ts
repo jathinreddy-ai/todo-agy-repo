@@ -85,7 +85,7 @@ export default async function handler(req: any, res: any) {
         });
 
         if (resendError) {
-          console.error(\`Failed to send email for task \${task.id}:\`, resendError);
+          console.error(`Failed to send email for task ${task.id}:`, resendError);
           continue; // Don't mark as sent if it failed!
         }
         */
@@ -93,26 +93,26 @@ export default async function handler(req: any, res: any) {
         // Send Email via Nodemailer
         try {
           await transporter.sendMail({
-            from: \`"Aether Todo" <\${process.env.GMAIL_USER}>\`,
+            from: `"Aether Todo" <${process.env.GMAIL_USER}>`,
             to: userEmail,
-            subject: \`Reminder: \${task.title}\`,
-            html: \`
+            subject: `Reminder: ${task.title}`,
+            html: `
               <div style="font-family: sans-serif; padding: 20px; background-color: #f9fafb; border-radius: 10px;">
                 <h2 style="color: #6366f1; margin-bottom: 5px;">Aether Tasks</h2>
                 <p style="color: #4b5563; font-size: 14px;">You have a task due soon!</p>
                 <div style="background-color: white; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; margin: 20px 0;">
-                  <h3 style="margin-top: 0; color: #111827;">\${task.title}</h3>
-                  \${task.description ? \`<p style="color: #4b5563;">\${task.description}</p>\` : ''}
+                  <h3 style="margin-top: 0; color: #111827;">${task.title}</h3>
+                  ${task.description ? `<p style="color: #4b5563;">${task.description}</p>` : ''}
                   <div style="margin-top: 15px; font-size: 12px; color: #6b7280; font-weight: bold;">
-                    DUE: \${task.due_date} at \${task.due_time}
+                    DUE: ${task.due_date} at ${task.due_time}
                   </div>
                 </div>
                 <p style="font-size: 12px; color: #9ca3af;">Sent by Aether Automation</p>
               </div>
-            \`
+            `
           });
         } catch (mailError) {
-          console.error(\`Failed to send email for task \${task.id}:\`, mailError);
+          console.error(`Failed to send email for task ${task.id}:`, mailError);
           continue; // Don't mark as sent if it failed!
         }
 
