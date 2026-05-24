@@ -47,19 +47,26 @@ export default async function handler(req: any, res: any) {
 
     // 3. Process each task for email reminders
     for (const task of tasks || []) {
-      if (!task.reminder_config) continue;
+      console.log(`[CRON] Evaluating task: ${task.id} ("${task.title}"), reminder_config: ${JSON.stringify(task.reminder_config)}`);
+
+      if (!task.reminder_config) {
+        console.log(`[CRON] Task ${task.id}: SKIP — reminder_config is null/missing in DB.`);
+        continue;
+      }
       
       const config = typeof task.reminder_config === 'string' 
         ? JSON.parse(task.reminder_config) 
         : task.reminder_config;
 
-      // Skip if email is disabled, already sent, or no reminder type
-      if (!config.email || config.emailSent || config.type === 'none' || !config.targetTimeUtc) continue;
+      if (!config.email) { console.log(`[CRON] Task ${task.id}: SKIP — email not enabled (config.email=${config.email}).`); continue; }
+      if (config.emailSent) { console.log(`[CRON] Task ${task.id}: SKIP — already sent.`); continue; }
+      if (config.type === 'none') { console.log(`[CRON] Task ${task.id}: SKIP — reminder type is 'none'.`); continue; }
+      if (!config.targetTimeUtc) { console.log(`[CRON] Task ${task.id}: SKIP — no targetTimeUtc (recreate this task!).`); continue; }
 
       const targetDate = new Date(config.targetTimeUtc);
       const diffMs = targetDate.getTime() - now.getTime();
       
-      console.log(`Checking task ${task.id}: Target ${targetDate.toISOString()}, Diff ${diffMs}ms`);
+      console.log(`[CRON] Task ${task.id}: targetTimeUtc=${config.targetTimeUtc}, now=${now.toISOString()}, diffMs=${diffMs} (window: -300000 to 0).`);
 
       // Trigger if the target time is within the last 5 minutes
       if (diffMs <= 0 && diffMs >= -300000) {
